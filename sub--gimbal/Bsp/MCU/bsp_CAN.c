@@ -139,7 +139,7 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *_hcan)
     CAN_RxHeaderTypeDef rx_header;
     uint8_t rx_data[8];
     static uint8_t RC_Data_Buf[16];
-    static uint8_t SLAM_Data_Buf[4];
+    // SLAM_Data_Buf removed (navigation/SLAM feature stripped)
 
     if (HAL_CAN_GetRxMessage(_hcan, CAN_RX_FIFO0, &rx_header, rx_data) != HAL_OK)
     {
@@ -202,7 +202,7 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *_hcan)
             shoot_data.initial_speed = (uint16_t)((Robot_Info_Buf[5] << 8) | Robot_Info_Buf[6]) / 10.0f;
             robot_pos.x = ((uint16_t)((Robot_Info_Buf[9] << 8) | Robot_Info_Buf[10]) / 100.0f);
             robot_pos.y = ((uint16_t)((Robot_Info_Buf[12] << 8) | Robot_Info_Buf[13]) / 100.0f);
-            Gimbal.ReachFlag = Robot_Info_Buf[14];
+            // Gimbal.ReachFlag removed (navigation feature stripped)
             game_status.game_progress = Robot_Info_Buf[15];
             Detect_Hook(JUDGE_TOE);
             break;
@@ -227,16 +227,16 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *_hcan)
             Decision_Info_Buf[15] = rx_data[7];
 
             sentry_info.SentryPresentPose = Decision_Info_Buf[13];
-            Gimbal.allow_to_attack_outpost = Decision_Info_Buf[14];
+            // Gimbal.allow_to_attack_outpost removed (feature stripped)
             break;
 
         case 0x666:
             Gimbal_Info[2] = rx_data[2];
-            Gimbal.isrollover = Gimbal_Info[2];
+            Gimbal.isRollover = Gimbal_Info[2];
             break;
         case 0x503:
             RMUL_NAV[0] = rx_data[0];
-            Gimbal.DecisionPlace = RMUL_NAV[0];
+            // Gimbal.DecisionPlace removed (navigation feature stripped)
             break;
         }
     }
@@ -273,14 +273,14 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *_hcan)
                 get_moto_info(&Gimbal.YawMotor, rx_data);
             Detect_Hook(GIMBAL_YAW_MOTOR_TOE);
             break;
-        case FRIC_RM3508_LEFT_ID:
+        case 0x203: // left friction wheel
             if (Shoot.FricMotor[0].msg_cnt++ <= 50)
                 get_moto_offset(&Shoot.FricMotor[0], rx_data);
             else
                 get_moto_info(&Shoot.FricMotor[0], rx_data);
             break;
 
-        case FRIC_RM3508_RIGHT_ID:
+        case 0x204: // right friction wheel
             if (Shoot.FricMotor[1].msg_cnt++ <= 50)
                 get_moto_offset(&Shoot.FricMotor[1], rx_data);
             else
@@ -293,7 +293,7 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *_hcan)
                 get_moto_info(&Gimbal.PitchMotor, rx_data);
             Detect_Hook(GIMBAL_PITCH_MOTOR_TOE);
             break;
-        case TRIGGER_MOTOR_ID:
+        case 0x202: // trigger motor
             if (Shoot.TriggerMotor.msg_cnt++ <= 50)
                 get_moto_offset(&Shoot.TriggerMotor, rx_data);
             else
@@ -404,7 +404,7 @@ void SendAimRefAngle(CAN_HandleTypeDef *_hcan, float ControlTorque, uint8_t Slop
     data[3] = (uint8_t)(YawControlTorque >> 8);
     data[4] = (uint8_t)YawControlTorque;
     data[5] = Slope;
-    data[6] = set_posture_mode;
-    data[7] = debug_posture;
+    data[6] = 0; // set_posture_mode removed
+    data[7] = 0; // debug_posture removed
     CAN_Send_Data(_hcan, Ref_Angle_ID, data, 8);
 }

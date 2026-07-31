@@ -6,11 +6,17 @@
 #include "remote_control.h"
 #include "user_lib.h"
 #include "detect_task.h"
+#include "gimbal_task.h"
 #include "motor.h"
 
 Shoot_t Shoot = {0};
 static float t, dt;
 uint32_t Shoot_DWT_Count = 0;
+
+// 前置声明
+static void Shoot_Set_Mode(void);
+static void Shoot_Set_Control(void);
+static void Send_Shoot_Current(void);
 
 void Shoot_Init(void)
 {

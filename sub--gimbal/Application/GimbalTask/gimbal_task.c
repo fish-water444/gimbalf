@@ -19,6 +19,12 @@ float c[3];
 static float t, dt;
 uint32_t Gimbal_DWT_Count = 0;
 
+static void Gimbal_Set_Mode(void);
+static void Gimbal_Get_CtrlValue(void);
+static void Gimbal_Set_Control(void);
+static void Send_Gimbal_Current(void);
+static void Emergency_Check(void);
+
 void Gimbal_Init(void)
 {
     Gimbal.YawMotor.CAN_ID = YAW_MOTOR_ID;
@@ -31,8 +37,7 @@ void Gimbal_Init(void)
              YAW_A_PID_KP, YAW_A_PID_KI, YAW_A_PID_KD,
              0, 0,
              YAW_A_PID_LPF, YAW_A_PID_D_LPF, 3,
-             360.0f,
-             Integral_Limit | Trapezoid_Intergral | OutputFilter | DerivativeFilter | ErrorWrapping);
+             Integral_Limit | Trapezoid_Intergral | OutputFilter | DerivativeFilter);
     c[0] = YAW_A_FCC_C0, c[1] = YAW_A_FCC_C1, c[2] = YAW_A_FCC_C2;
     Feedforward_Init(&Gimbal.YawMotor.FFC_Angle, YAW_A_FFC_MAXOUT, c, YAW_A_FCC_LPF, 5, 5);
 
@@ -40,7 +45,7 @@ void Gimbal_Init(void)
     PID_Init(&Gimbal.YawMotor.PID_Velocity,
              YAW_V_PID_MAXOUT, YAW_V_PID_MAXINTEGRAL, 0,
              YAW_V_PID_KP, YAW_V_PID_KI, YAW_V_PID_KD,
-             0, 0, YAW_V_PID_LPF, 0, 0, 0,
+             0, 0, YAW_V_PID_LPF, 0, 0,
              Integral_Limit | Trapezoid_Intergral | OutputFilter);
     c[0] = YAW_V_FCC_C0, c[1] = YAW_V_FCC_C1, c[2] = YAW_V_FCC_C2;
     Feedforward_Init(&Gimbal.YawMotor.FFC_Velocity, YAW_V_FFC_MAXOUT, c, YAW_V_FCC_LPF, 5, 5);
@@ -49,7 +54,7 @@ void Gimbal_Init(void)
     PID_Init(&Gimbal.YawMotor.PID_Torque,
              YAW_T_PID_MAXOUT, YAW_T_PID_MAXINTEGRAL, 0,
              YAW_T_PID_KP, YAW_T_PID_KI, YAW_T_PID_KD,
-             0, 0, YAW_T_PID_LPF, 0, 0, 360.0f,
+             0, 0, YAW_T_PID_LPF, 0, 0,
              Integral_Limit | Trapezoid_Intergral | OutputFilter);
     c[0] = 1, c[1] = 0, c[2] = 0;
     Feedforward_Init(&Gimbal.YawMotor.FFC_Torque, 30000, c, 0, 4, 4);
@@ -64,8 +69,7 @@ void Gimbal_Init(void)
              PITCH_A_PID_KP, PITCH_A_PID_KI, PITCH_A_PID_KD,
              0, 0,
              PITCH_A_PID_LPF, PITCH_A_PID_D_LPF, 3,
-             360.0f,
-             Integral_Limit | Trapezoid_Intergral | OutputFilter | DerivativeFilter | ErrorWrapping);
+             Integral_Limit | Trapezoid_Intergral | OutputFilter | DerivativeFilter);
     c[0] = PITCH_A_FCC_C0, c[1] = PITCH_A_FCC_C1, c[2] = PITCH_A_FCC_C2;
     Feedforward_Init(&Gimbal.PitchMotor.FFC_Angle, PITCH_A_FFC_MAXOUT, c, PITCH_A_FCC_LPF, 5, 5);
 
@@ -73,7 +77,7 @@ void Gimbal_Init(void)
     PID_Init(&Gimbal.PitchMotor.PID_Velocity,
              PITCH_V_PID_MAXOUT, PITCH_V_PID_MAXINTEGRAL, 0,
              PITCH_V_PID_KP, PITCH_V_PID_KI, PITCH_V_PID_KD,
-             0, 0, PITCH_V_PID_LPF, 0, 0, 0,
+             0, 0, PITCH_V_PID_LPF, 0, 0,
              Integral_Limit | Trapezoid_Intergral | OutputFilter);
     c[0] = PITCH_V_FCC_C0, c[1] = PITCH_V_FCC_C1, c[2] = PITCH_V_FCC_C2;
     Feedforward_Init(&Gimbal.PitchMotor.FFC_Velocity, PITCH_V_FFC_MAXOUT, c, PITCH_V_FCC_LPF, 5, 5);
@@ -82,7 +86,7 @@ void Gimbal_Init(void)
     PID_Init(&Gimbal.PitchMotor.PID_Torque,
              PITCH_T_PID_MAXOUT, PITCH_T_PID_MAXINTEGRAL, 0,
              PITCH_T_PID_KP, PITCH_T_PID_KI, PITCH_T_PID_KD,
-             0, 0, PITCH_T_PID_LPF, 0, 0, 360.0f,
+             0, 0, PITCH_T_PID_LPF, 0, 0,
              Integral_Limit | Trapezoid_Intergral | OutputFilter);
     c[0] = 1, c[1] = 0, c[2] = 0;
     Feedforward_Init(&Gimbal.PitchMotor.FFC_Torque, 30000, c, 0, 4, 4);

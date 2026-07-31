@@ -138,12 +138,7 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *_hcan)
     CAN_RxHeaderTypeDef rx_header;
     uint8_t rx_data[8];
     static uint8_t RC_Data_Buf[16];
-    static uint8_t SLAM_Data_Buf[4];
-    static float cruise_omni_offset = 0;
-    static uint8_t cruise_flag_local = 0;
-    static float cruise_begin_local = 0;
-    static float cruise_end_local = 0;
-    static float cruise_speed_local = 0;
+    // SLAM/cruise local variables removed (navigation feature stripped)
 
     if (HAL_CAN_GetRxMessage(_hcan, CAN_RX_FIFO0, &rx_header, rx_data) != HAL_OK)
     {
@@ -155,15 +150,7 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *_hcan)
 
     if (_hcan == &hcan2)
     {
-        switch (rx_header.StdId)
-        {
-        case SUB_YAW_MOTOR_ID:
-            if (Gimbal.SubYawMotor.msg_cnt++ <= 50)
-                get_moto_offset(&Gimbal.SubYawMotor, rx_data);
-            else
-                get_moto_info(&Gimbal.SubYawMotor, rx_data);
-            break;
-        }
+        // CAN2 sub-yaw motor removed (navigation/SLAM feature stripped)
     }
     if (_hcan == &hcan1)
     {
@@ -220,7 +207,7 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *_hcan)
             NAV_Data[5] = rx_data[5]; // TargetY L8
             NAV_Data[6] = rx_data[6]; // IsEnemySentryInvincible
             NAV_Data[7] = rx_data[7]; // PH2
-            Gimbal.DecisionPlace = NAV_Data[0];
+            // Gimbal.DecisionPlace removed (navigation feature stripped)
             map_command.target_position_x = ((float)((NAV_Data[2] << 8) | (NAV_Data[3]))) / 1000.0f;
             map_command.target_position_y = ((float)((NAV_Data[4] << 8) | (NAV_Data[5]))) / 1000.0f;
             break;
@@ -234,12 +221,7 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *_hcan)
             DownLoad_Data[6] = rx_data[6];
             DownLoad_Data[7] = rx_data[7];
 
-            cruise_omni_offset = uint16_to_float((DownLoad_Data[0] << 8) | (DownLoad_Data[1]), -PI, PI, 16) * 180 / PI;
-            Gimbal.position_x = ((float)((DownLoad_Data[2] << 8) | (DownLoad_Data[3]))) / 1000.0f;
-            Gimbal.position_y = ((float)((DownLoad_Data[4] << 8) | (DownLoad_Data[5]))) / 1000.0f;
-            Gimbal.isHero = DownLoad_Data[6] >> 2;
-            Gimbal.isLock = DownLoad_Data[6] >> 1;
-            Gimbal.isTarget = DownLoad_Data[6];
+            // cruise_omni_offset, position_x/y, isHero, isLock, isTarget removed (navigation/vision stripped)
 
             break;
         case 0x155:
@@ -253,8 +235,7 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *_hcan)
             Aim_Data[7] = rx_data[7];
             AimAssist.Status = Aim_Data[0];
             AimAssist.allow_to_lock = Aim_Data[1];
-            Gimbal.Slope = Aim_Data[5];
-            Gimbal.SubYawTorque = 0.022 * ((int16_t)((Aim_Data[3] << 8) | (Aim_Data[4])));
+            // Gimbal.Slope, Gimbal.SubYawTorque removed (aim assist coupling stripped)
 
             break;
         case 0x133:
@@ -282,10 +263,10 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *_hcan)
             robot_state.shooter_barrel_heat_limit = (uint16_t)((Robot_Info_Buf[1] << 8) | Robot_Info_Buf[2]);
             power_heat_data.shooter_17mm_barrel_heat = (uint16_t)((Robot_Info_Buf[3] << 8) | Robot_Info_Buf[4]);
             shoot_data.initial_speed = (uint16_t)((Robot_Info_Buf[5] << 8) | Robot_Info_Buf[6]) / 10.0f;
-            cruise_flag_local = Robot_Info_Buf[8];
+            // cruise_flag_local removed (navigation feature stripped)
             robot_pos.x = ((uint16_t)((Robot_Info_Buf[9] << 8) | Robot_Info_Buf[10]) / 100.0f);
             robot_pos.y = ((uint16_t)((Robot_Info_Buf[12] << 8) | Robot_Info_Buf[13]) / 100.0f);
-            Gimbal.ReachFlag = Robot_Info_Buf[14];
+            // Gimbal.ReachFlag removed (navigation feature stripped)
             game_status.game_progress = Robot_Info_Buf[15];
             Detect_Hook(JUDGE_TOE);
             break;
@@ -309,10 +290,8 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *_hcan)
             Decision_Info_Buf[14] = rx_data[6];
             Decision_Info_Buf[15] = rx_data[7];
 
-            cruise_begin_local = uint16_to_float((uint16_t)((Decision_Info_Buf[0] << 8) | Decision_Info_Buf[1]), -180.0f, 180.0f, 16);
-            cruise_end_local = uint16_to_float((uint16_t)((Decision_Info_Buf[2] << 8) | Decision_Info_Buf[3]), -180.0f, 180.0f, 16);
+            // cruise_begin/end/speed removed (navigation feature stripped)
             chassis_move_ratio = uint16_to_float((uint16_t)((Decision_Info_Buf[4] << 8) | Decision_Info_Buf[5]), 0.0f, 1.0f, 16);
-            cruise_speed_local = uint16_to_float((uint16_t)((Decision_Info_Buf[6] << 8) | Decision_Info_Buf[7]), 0.0f, 1.0f, 16);
             
             game_status.stage_remain_time = (uint16_t)((Decision_Info_Buf[8] << 8) | Decision_Info_Buf[9]);
             robot_state.current_HP = (uint16_t)((Decision_Info_Buf[10] << 8) | Decision_Info_Buf[11]);
@@ -358,7 +337,7 @@ void Send_Follow_Data(CAN_HandleTypeDef *_hcan, uint8_t *FOLLOW_Data_Buf)
 
 void Send_Follow_Data_2(CAN_HandleTypeDef *_hcan, uint8_t *FOLLOW_Data_Buf)
 {
-    uint8_t data[8] = {AimAssist.Status, InPositionFlag, 0, 0, 0, 0, 0, 0};
+    uint8_t data[8] = {AimAssist.Status, 0, 0, 0, 0, 0, 0, 0};
 
     (void)FOLLOW_Data_Buf;
     CAN_Send_Data(_hcan, 0x251, data, 8);
