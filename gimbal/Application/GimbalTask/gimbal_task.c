@@ -19,6 +19,13 @@ float c[3];
 static float t, dt;
 uint32_t Gimbal_DWT_Count = 0;
 
+// 前置声明
+static void Gimbal_Set_Mode(void);
+static void Gimbal_Get_CtrlValue(void);
+static void Gimbal_Set_Control(void);
+static void Send_Gimbal_Current(void);
+static void Emergency_Check(void);
+
 void Gimbal_Init(void)
 {
     Gimbal.YawMotor.CAN_ID = YAW_MOTOR_ID;
